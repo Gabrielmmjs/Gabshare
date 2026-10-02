@@ -1,0 +1,99 @@
+Replace the entire content of server.js with exactly this code and restart:
+
+require('dotenv').config();
+const express = require('express');
+const { createClient } = require('redis');
+const bcrypt = require('bcryptjs');
+const cors = require('cors');
+const path = require('path');
+
+const app = express();
+app.use(express.json());
+app.use(cors());
+app.use(express.static(path.join(__dirname, 'public')));
+
+const client = createClient({ url: process.env.REDIS_URL });
+client.on('error', (err) => console.error('Redis error:', err.message));
+client.on('connect', () => console.log('✅ Conectado ao Redis Cloud!'));
+
+const userKey = (name) => `user:${name.toLowerCase()}`;
+const postKey = (id) => `post:${id}`;
+const POSTS_LIST = 'posts:ids';
+
+app.post('/api/register', async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) return res.status(400).json({ error: 'Preencha todos os campos.' });
+    if (password.length < 4) return res.status(400).json({ error: 'Senha deve ter no mínimo 4 caracteres.' });
+    const key = userKey(name);
+    const exists = await client.exists(key);
+    if (exists) return res.status(409).json({ error: 'Nome de usuário já cadastrado.' });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await client.hSet(key, { name, email, password: hashedPassword, createdAt: new Date().toISOString() });
+    return res.status(201).json({ message: `Conta criada com sucesso! Bem-vindo, ${name}.` });
+  } catch (err) {
+    return res.status(500).json({ error: 'Erro interno no servidor.' });
+  }
+});
+
+app.post('/api/login', async (req, res) => {
+  try {
+    const { name, password } = req.body;
+    if (!name || !password) return res.status(400).json({ error: 'Preencha todos os campos.' });
+    const user = await client.hGetAll(userKey(name));
+    if (!user || Object.keys(user).length === 0) return res.status(401).json({ error: 'Usuário não encontrado.' });
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ error: 'Senha incorreta.' });
+    return res.json({ message: 'Login realizado!', user: { name: user.name, email: user.email } });
+  } catch (err) {
+    return res.status(500).json({ error: 'Erro interno no servidor.' });
+  }
+});
+
+app.post('/api/posts', async (req, res) => {
+  try {
+    const { author, content } = req.body;
+    if (!author || !content || !content.trim()) return res.status(400).json({ error: 'Conteúdo obrigatório.' });
+    const postId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    await client.hSet(postKey(postId), { id: postId, author, content: content.trim(), createdAt: new Date().toISOString(), likes: '0' });
+    await client.lPush(POSTS_LIST, postId);
+    return res.status(201).json({ message: 'Post publicado!', post: { id: postId, author, content: content.trim(), createdAt: new Date().toISOString(), likes: 0 } });
+  } catch (err) {
+    return res.status(500).json({ error: 'Erro interno no servidor.' });
+  }
+});
+
+app.get('/api/posts', async (req, res) => {
+  try {
+    const postIds = await client.lRange(POSTS_LIST, 0, -1);
+    if (!postIds || postIds.length === 0) return res.json({ posts: [] });
+    const posts = await Promise.all(postIds.map((id) => client.hGetAll(postKey(id))));
+    return res.json({ posts: posts.filter((p) => p && Object.keys(p).length > 0).map((p) => ({ ...p, likes: parseInt(p.likes || '0', 10) })) });
+  } catch (err) {
+    return res.status(500).json({ error: 'Erro interno no servidor.' });
+  }
+});
+
+app.post('/api/posts/:id/like', async (req, res) => {
+  try {
+    const key = postKey(req.params.id);
+    const exists = await client.exists(key);
+    if (!exists) return res.status(404).json({ error: 'Post não encontrado.' });
+    const newLikes = await client.hIncrBy(key, 'likes', 1);
+    return res.json({ likes: newLikes });
+  } catch (err) {
+    return res.status(500).json({ error: 'Erro interno no servidor.' });
+  }
+});
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+async function main() {
+  await client.connect();
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
+}
+
+main();

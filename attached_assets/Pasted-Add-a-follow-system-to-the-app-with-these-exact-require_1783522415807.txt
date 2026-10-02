@@ -1,0 +1,48 @@
+Add a follow system to the app with these exact requirements:
+
+BACKEND (server.js):
+
+1. POST /api/follow — body: { follower, following }
+   - Uses SADD to add "following" to the Set "user:{follower}:following"
+   - Uses SADD to add "follower" to the Set "user:{following}:followers"
+   - Returns { message: 'Seguindo!' }
+
+2. POST /api/unfollow — body: { follower, following }
+   - Uses SREM to remove from both Sets
+   - Returns { message: 'Deixou de seguir.' }
+
+3. GET /api/users/:name/following — returns the list of users that :name follows
+   - Uses SMEMBERS on "user:{name}:following"
+
+4. GET /api/follow/status?follower=x&following=y — checks if x follows y
+   - Uses SISMEMBER on "user:{follower}:following"
+   - Returns { following: true/false }
+
+5. Update GET /api/posts to accept a query param ?feed=following&author=name
+   - If feed=following, fetch SMEMBERS of "user:{name}:following" to get the list of followed users
+   - Then fetch LRANGE posts:ids 0 -1, get each post with HGETALL, filter only posts where post.author is in the followed list
+   - Return only the last 20 posts (slice 0, 20)
+   - If feed=general (default), return the last 20 posts from all users (slice 0, 20)
+
+FRONTEND (index.html):
+
+1. Add two feed tabs below the header: "Feed Geral" and "Seguindo"
+   - Style them like the existing auth tabs (same dark pill style)
+   - "Feed Geral" is active by default
+   - Clicking each tab calls loadFeed('general') or loadFeed('following')
+
+2. Update loadFeed() to accept a mode parameter ('general' or 'following')
+   - If mode is 'following', fetch /api/posts?feed=following&author={currentUser.name}
+   - If mode is 'general', fetch /api/posts?feed=general
+   - Store the current mode in a variable so liked/comment actions don't reset the tab
+
+3. On each post card that is NOT from the current user, add a follow/unfollow button next to the author name
+   - On load, check follow status with GET /api/follow/status
+   - If not following: show a small "Seguir" button
+   - If already following: show "Seguindo" button (different style)
+   - Clicking toggles follow/unfollow via POST /api/follow or /api/unfollow
+   - After toggling, if current tab is 'following', reload the feed
+
+4. Keep all existing features working: likes, comments, filter by user, char counter, toast notifications.
+
+Use the same dark theme, same border-radius, same color variables as the rest of the app. Keep it clean and minimal.

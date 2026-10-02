@@ -1,0 +1,25 @@
+kind = "api"
+previewPath = "/"
+title = "My App"
+version = "1.0.0"
+id = "3B4_FFSkEVBkAeYMFRJ2e"
+
+[[services]]
+localPort = 5000
+name = "My App"
+paths = ["/"]
+
+[services.development]
+run = "node server.js"
+
+[services.production]
+
+[services.production.run]
+args = ["node", "artifacts/api-server/server.js"]
+
+[services.production.run.env]
+PORT = "5000"
+NODE_ENV = "production"
+
+[services.production.health.startup]
+path = "/api/health"

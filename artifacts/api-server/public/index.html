@@ -1,0 +1,1517 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gabshare — Rede Social</title>
+    <style>
+      /* ── Reset & Base ──────────────────────────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #0d0f14;
+        --surface: #161922;
+        --card: #1c2030;
+        --border: #2a3045;
+        --accent: #7c6bff;
+        --accent2: #a78bfa;
+        --text: #e8eaf0;
+        --muted: #8892aa;
+        --danger: #f87171;
+        --success: #4ade80;
+        --radius: 14px;
+        --font: "Inter", "Segoe UI", system-ui, sans-serif;
+      }
+
+      body {
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      /* ── Auth Screen ───────────────────────────────────────────────────────── */
+      #auth-screen {
+        width: 100%;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+      }
+
+      .auth-box {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 40px 36px;
+        width: 100%;
+        max-width: 420px;
+      }
+
+      .auth-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 28px;
+      }
+
+      .auth-logo svg {
+        width: 34px;
+        height: 34px;
+      }
+
+      .auth-logo span {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        background: linear-gradient(
+          135deg,
+          var(--accent) 0%,
+          var(--accent2) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      /* Tabs */
+      .auth-tabs {
+        display: flex;
+        background: var(--bg);
+        border-radius: 10px;
+        padding: 4px;
+        margin-bottom: 28px;
+        border: 1px solid var(--border);
+      }
+
+      .tab-btn {
+        flex: 1;
+        padding: 9px;
+        border: none;
+        background: none;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .tab-btn.active {
+        background: var(--card);
+        color: var(--text);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+      }
+
+      /* Form */
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .form-group label {
+        display: block;
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 6px;
+        font-weight: 500;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 11px 14px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        color: var(--text);
+        font-size: 15px;
+        font-family: var(--font);
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      .form-group input:focus {
+        border-color: var(--accent);
+      }
+
+      .form-group input::placeholder {
+        color: #3d4560;
+      }
+
+      .btn-primary {
+        width: 100%;
+        padding: 12px;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          opacity 0.2s,
+          transform 0.1s;
+        margin-top: 4px;
+        font-family: var(--font);
+      }
+
+      .btn-primary:hover {
+        opacity: 0.88;
+      }
+      .btn-primary:active {
+        transform: scale(0.98);
+      }
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* Toast / Message */
+      #auth-msg {
+        min-height: 22px;
+        font-size: 13px;
+        margin-bottom: 14px;
+        padding: 0 2px;
+        display: none;
+      }
+
+      #auth-msg.error {
+        color: var(--danger);
+        display: block;
+      }
+      #auth-msg.success {
+        color: var(--success);
+        display: block;
+      }
+
+      /* ── App Screen ────────────────────────────────────────────────────────── */
+      #app-screen {
+        display: none;
+        width: 100%;
+        max-width: 660px;
+        padding: 0 16px 80px;
+      }
+
+      /* Header */
+      .app-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(13, 15, 20, 0.88);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
+        padding: 14px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 0 -16px;
+        padding-left: 20px;
+        padding-right: 20px;
+        margin-bottom: 24px;
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .header-logo {
+        font-size: 18px;
+        font-weight: 700;
+        background: linear-gradient(
+          135deg,
+          var(--accent) 0%,
+          var(--accent2) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .header-user {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .header-user strong {
+        color: var(--text);
+      }
+
+      .btn-logout {
+        padding: 7px 16px;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        border-radius: 8px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: var(--font);
+      }
+
+      .btn-logout:hover {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+
+      /* Composer */
+      .composer {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-bottom: 24px;
+      }
+
+      .composer-top {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 15px;
+        color: white;
+        flex-shrink: 0;
+      }
+
+      .avatar.sm {
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+      }
+
+      .avatar.muted {
+        background: linear-gradient(135deg, #3d4560, #2a3045);
+      }
+
+      textarea#post-content {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--text);
+        font-size: 15px;
+        font-family: var(--font);
+        resize: none;
+        min-height: 68px;
+        line-height: 1.6;
+      }
+
+      textarea#post-content::placeholder {
+        color: #3d4560;
+      }
+
+      .composer-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+      }
+
+      #char-count {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      #char-count.warning {
+        color: #facc15;
+      }
+      #char-count.danger {
+        color: var(--danger);
+      }
+
+      .btn-post {
+        padding: 9px 22px;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s;
+        font-family: var(--font);
+      }
+
+      .btn-post:hover {
+        opacity: 0.88;
+      }
+      .btn-post:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      #post-msg {
+        font-size: 13px;
+        min-height: 18px;
+        margin-bottom: 8px;
+      }
+
+      #post-msg.error {
+        color: var(--danger);
+      }
+      #post-msg.success {
+        color: var(--success);
+      }
+
+      /* Feed */
+      .feed-header {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 12px;
+        letter-spacing: 0.3px;
+      }
+
+      #feed {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .post-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+        transition: border-color 0.2s;
+      }
+
+      .post-card:hover {
+        border-color: #3d4560;
+      }
+
+      .post-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .post-meta {
+        flex: 1;
+      }
+
+      .post-author {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .author-link {
+        cursor: pointer;
+        transition: color 0.15s;
+      }
+
+      .author-link:hover {
+        color: var(--accent);
+        text-decoration: underline;
+      }
+
+      .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 16px;
+        padding: 7px 14px;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        border-radius: 8px;
+        font-size: 13px;
+        font-family: var(--font);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-back:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* Feed tabs */
+      .feed-tabs {
+        display: flex;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 4px;
+        margin-bottom: 20px;
+      }
+
+      .feed-tab-btn {
+        flex: 1;
+        padding: 8px;
+        border: none;
+        background: none;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 7px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: var(--font);
+      }
+
+      .feed-tab-btn.active {
+        background: var(--card);
+        color: var(--text);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+      }
+
+      /* Follow button */
+      .btn-follow {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 10px;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        background: transparent;
+        transition: all 0.2s;
+        font-family: var(--font);
+        margin-left: 8px;
+        vertical-align: middle;
+      }
+
+      .btn-follow:hover {
+        background: rgba(124, 107, 255, 0.12);
+      }
+
+      .btn-follow.following {
+        border-color: var(--border);
+        color: var(--muted);
+      }
+
+      .btn-follow.following:hover {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+
+      .post-time {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 1px;
+      }
+
+      .post-content {
+        font-size: 15px;
+        line-height: 1.65;
+        color: var(--text);
+        word-break: break-word;
+        white-space: pre-wrap;
+      }
+
+      .post-footer {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .btn-like {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        border-radius: 20px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: var(--font);
+      }
+
+      .btn-like:hover,
+      .btn-like.liked {
+        border-color: #f87171;
+        color: #f87171;
+        background: rgba(248, 113, 113, 0.08);
+      }
+
+      .btn-like svg {
+        width: 15px;
+        height: 15px;
+        flex-shrink: 0;
+      }
+
+      .btn-comment {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        border-radius: 20px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: var(--font);
+      }
+
+      .btn-comment:hover,
+      .btn-comment.active {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(124, 107, 255, 0.08);
+      }
+
+      .btn-comment svg {
+        width: 15px;
+        height: 15px;
+        flex-shrink: 0;
+      }
+
+      .comment-section {
+        display: none;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+      }
+
+      .comment-section.open {
+        display: block;
+      }
+
+      .comment-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .comment-item {
+        display: flex;
+        gap: 9px;
+        align-items: flex-start;
+      }
+
+      .comment-body {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 9px 12px;
+        flex: 1;
+      }
+
+      .comment-author {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 2px;
+      }
+
+      .comment-content {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.5;
+        word-break: break-word;
+      }
+
+      .comment-time {
+        font-size: 11px;
+        color: var(--border);
+        margin-top: 4px;
+      }
+
+      .comment-form {
+        display: flex;
+        gap: 9px;
+        align-items: flex-start;
+      }
+
+      .comment-input {
+        flex: 1;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 9px 12px;
+        color: var(--text);
+        font-size: 13px;
+        font-family: var(--font);
+        resize: none;
+        outline: none;
+        min-height: 38px;
+        max-height: 100px;
+        transition: border-color 0.2s;
+      }
+
+      .comment-input:focus {
+        border-color: var(--accent);
+      }
+
+      .comment-input::placeholder {
+        color: #3d4560;
+      }
+
+      .btn-submit-comment {
+        padding: 8px 14px;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: var(--font);
+        transition: opacity 0.2s;
+        white-space: nowrap;
+      }
+
+      .btn-submit-comment:hover { opacity: 0.88; }
+      .btn-submit-comment:disabled { opacity: 0.45; cursor: not-allowed; }
+
+      .comments-empty {
+        font-size: 13px;
+        color: var(--muted);
+        text-align: center;
+        padding: 10px 0 14px;
+      }
+
+      /* Empty feed */
+      .feed-empty {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--muted);
+        border: 1px dashed var(--border);
+        border-radius: var(--radius);
+      }
+
+      .feed-empty svg {
+        width: 40px;
+        height: 40px;
+        opacity: 0.35;
+        margin-bottom: 12px;
+      }
+
+      .feed-empty p {
+        font-size: 15px;
+      }
+      .feed-empty small {
+        font-size: 13px;
+        opacity: 0.6;
+      }
+
+      /* Loading spinner */
+      .spinner {
+        width: 22px;
+        height: 22px;
+        border: 2px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        margin: 40px auto;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Toast notification */
+      #toast {
+        position: fixed;
+        bottom: 28px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: var(--card);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 12px 22px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 100;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        white-space: nowrap;
+      }
+
+      #toast.show {
+        transform: translateX(-50%) translateY(0);
+      }
+      #toast.success-toast {
+        border-color: rgba(74, 222, 128, 0.4);
+        color: var(--success);
+      }
+      #toast.error-toast {
+        border-color: rgba(248, 113, 113, 0.4);
+        color: var(--danger);
+      }
+
+      /* Responsive */
+      @media (max-width: 480px) {
+        .auth-box {
+          padding: 28px 20px;
+        }
+        .app-header {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ── AUTH SCREEN ──────────────────────────────────────────────────────── -->
+    <div id="auth-screen">
+      <div class="auth-box">
+        <div class="auth-logo">
+          <svg
+            viewBox="0 0 34 34"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect
+              width="34"
+              height="34"
+              rx="10"
+              fill="#7c6bff"
+              opacity="0.15"
+            />
+            <circle cx="17" cy="12" r="4" fill="#7c6bff" />
+            <circle cx="9" cy="24" r="3" fill="#a78bfa" />
+            <circle cx="25" cy="24" r="3" fill="#a78bfa" />
+            <line
+              x1="17"
+              y1="16"
+              x2="9"
+              y2="21"
+              stroke="#7c6bff"
+              stroke-width="1.5"
+            />
+            <line
+              x1="17"
+              y1="16"
+              x2="25"
+              y2="21"
+              stroke="#7c6bff"
+              stroke-width="1.5"
+            />
+          </svg>
+          <span>Gabshare</span>
+        </div>
+
+        <div class="auth-tabs">
+          <button
+            class="tab-btn active"
+            id="tab-login"
+            onclick="switchTab('login')"
+          >
+            Entrar
+          </button>
+          <button
+            class="tab-btn"
+            id="tab-register"
+            onclick="switchTab('register')"
+          >
+            Criar conta
+          </button>
+        </div>
+
+        <div id="auth-msg" role="alert"></div>
+
+        <!-- Login form -->
+        <form id="login-form" onsubmit="handleLogin(event)" novalidate>
+          <div class="form-group">
+            <label for="login-name">Nome de usuário</label>
+            <input
+              id="login-name"
+              type="text"
+              placeholder="seu_nome"
+              autocomplete="username"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="login-pass">Senha</label>
+            <input
+              id="login-pass"
+              type="password"
+              placeholder="••••••"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+          <button type="submit" class="btn-primary" id="btn-login">
+            Entrar
+          </button>
+        </form>
+
+        <!-- Register form (hidden initially) -->
+        <form
+          id="register-form"
+          style="display: none"
+          onsubmit="handleRegister(event)"
+          novalidate
+        >
+          <div class="form-group">
+            <label for="reg-name">Nome de usuário</label>
+            <input
+              id="reg-name"
+              type="text"
+              placeholder="seu_nome"
+              autocomplete="username"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="reg-email">Gmail / E-mail</label>
+            <input
+              id="reg-email"
+              type="email"
+              placeholder="voce@gmail.com"
+              autocomplete="email"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="reg-pass">Senha</label>
+            <input
+              id="reg-pass"
+              type="password"
+              placeholder="mínimo 4 caracteres"
+              autocomplete="new-password"
+              required
+            />
+          </div>
+          <button type="submit" class="btn-primary" id="btn-register">
+            Criar conta
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── APP SCREEN ───────────────────────────────────────────────────────── -->
+    <div id="app-screen">
+      <!-- Header (sticky) -->
+      <div class="app-header">
+        <div class="header-left">
+          <span class="header-logo">Gabshare</span>
+          <span class="header-user"
+            >Olá, <strong id="header-name"></strong
+          ></span>
+        </div>
+        <button class="btn-logout" onclick="handleLogout()">Sair</button>
+      </div>
+
+      <!-- Post composer -->
+      <div class="composer">
+        <p id="post-msg" role="alert"></p>
+        <div class="composer-top">
+          <div class="avatar" id="composer-avatar"></div>
+          <textarea
+            id="post-content"
+            placeholder="O que está acontecendo?"
+            maxlength="280"
+            oninput="updateCharCount()"
+          ></textarea>
+        </div>
+        <div class="composer-footer">
+          <span id="char-count">0 / 280</span>
+          <button class="btn-post" onclick="handlePost()" id="btn-post">
+            Publicar
+          </button>
+        </div>
+      </div>
+
+      <!-- Feed tabs -->
+      <div class="feed-tabs">
+        <button class="feed-tab-btn active" id="tab-general" onclick="switchFeedTab('general')">Feed Geral</button>
+        <button class="feed-tab-btn" id="tab-following" onclick="switchFeedTab('following')">Seguindo</button>
+      </div>
+
+      <!-- Feed -->
+      <div id="feed">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast"></div>
+
+    <script>
+      // ── State ──────────────────────────────────────────────────────────────
+      let currentUser = null;
+      const likedPosts = new Set(); // rastreia posts curtidos nesta sessão
+      let currentFeedMode = 'general';
+
+      // ── Tab switching ──────────────────────────────────────────────────────
+      function switchTab(tab) {
+        const isLogin = tab === "login";
+        document
+          .getElementById("tab-login")
+          .classList.toggle("active", isLogin);
+        document
+          .getElementById("tab-register")
+          .classList.toggle("active", !isLogin);
+        document.getElementById("login-form").style.display = isLogin
+          ? "block"
+          : "none";
+        document.getElementById("register-form").style.display = isLogin
+          ? "none"
+          : "block";
+        clearAuthMsg();
+      }
+
+      // ── Auth messages ──────────────────────────────────────────────────────
+      function showAuthMsg(text, type = "error") {
+        const el = document.getElementById("auth-msg");
+        el.textContent = text;
+        el.className = type;
+      }
+
+      function clearAuthMsg() {
+        const el = document.getElementById("auth-msg");
+        el.textContent = "";
+        el.className = "";
+      }
+
+      // ── Toast ──────────────────────────────────────────────────────────────
+      let toastTimeout;
+      function showToast(text, type = "") {
+        const el = document.getElementById("toast");
+        el.textContent = text;
+        el.className = `show ${type ? type + "-toast" : ""}`;
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => el.classList.remove("show"), 2800);
+      }
+
+      // ── Avatar helper ──────────────────────────────────────────────────────
+      function getInitial(name) {
+        return name ? name[0].toUpperCase() : "?";
+      }
+
+      // ── Login ──────────────────────────────────────────────────────────────
+      async function handleLogin(e) {
+        e.preventDefault();
+        clearAuthMsg();
+        const name = document.getElementById("login-name").value.trim();
+        const password = document.getElementById("login-pass").value;
+        const btn = document.getElementById("btn-login");
+
+        if (!name || !password) {
+          showAuthMsg("Preencha nome e senha.");
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "Entrando...";
+
+        try {
+          const res = await fetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, password }),
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            showAuthMsg(data.error || "Erro ao entrar.");
+          } else {
+            currentUser = data.user;
+            enterApp();
+          }
+        } catch {
+          showAuthMsg("Não foi possível conectar ao servidor.");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Entrar";
+        }
+      }
+
+      // ── Register ───────────────────────────────────────────────────────────
+      async function handleRegister(e) {
+        e.preventDefault();
+        clearAuthMsg();
+        const name = document.getElementById("reg-name").value.trim();
+        const email = document.getElementById("reg-email").value.trim();
+        const password = document.getElementById("reg-pass").value;
+        const btn = document.getElementById("btn-register");
+
+        if (!name || !email || !password) {
+          showAuthMsg("Preencha todos os campos.");
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "Criando conta...";
+
+        try {
+          const res = await fetch("/api/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email, password }),
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            showAuthMsg(data.error || "Erro ao criar conta.");
+          } else {
+            showAuthMsg(data.message + " Faça login.", "success");
+            setTimeout(() => switchTab("login"), 1400);
+          }
+        } catch {
+          showAuthMsg("Não foi possível conectar ao servidor.");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Criar conta";
+        }
+      }
+
+      // ── Enter app ──────────────────────────────────────────────────────────
+      function enterApp() {
+        document.getElementById("auth-screen").style.display = "none";
+        document.getElementById("app-screen").style.display = "block";
+        document.getElementById("header-name").textContent = currentUser.name;
+
+        const av = document.getElementById("composer-avatar");
+        av.textContent = getInitial(currentUser.name);
+
+        loadFeed('general');
+      }
+
+      // ── Logout ─────────────────────────────────────────────────────────────
+      function handleLogout() {
+        currentUser = null;
+        likedPosts.clear();
+        document.getElementById("app-screen").style.display = "none";
+        document.getElementById("auth-screen").style.display = "flex";
+        document.getElementById("login-name").value = "";
+        document.getElementById("login-pass").value = "";
+        document.getElementById("post-content").value = "";
+        switchTab("login");
+      }
+
+      // ── Char counter ────────────────────────────────────────────────────────
+      function updateCharCount() {
+        const len = document.getElementById("post-content").value.length;
+        const el = document.getElementById("char-count");
+        el.textContent = `${len} / 280`;
+        el.className = len > 260 ? "danger" : len > 230 ? "warning" : "";
+      }
+
+      // ── Create post ─────────────────────────────────────────────────────────
+      async function handlePost() {
+        const content = document.getElementById("post-content").value.trim();
+        const msgEl = document.getElementById("post-msg");
+        msgEl.textContent = "";
+        msgEl.className = "";
+
+        if (!content) {
+          msgEl.textContent = "Escreva algo antes de publicar.";
+          msgEl.className = "error";
+          return;
+        }
+
+        const btn = document.getElementById("btn-post");
+        btn.disabled = true;
+        btn.textContent = "Publicando...";
+
+        try {
+          const res = await fetch("/api/posts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ author: currentUser.name, content }),
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            msgEl.textContent = data.error || "Erro ao publicar.";
+            msgEl.className = "error";
+          } else {
+            document.getElementById("post-content").value = "";
+            updateCharCount();
+            showToast("Post publicado!", "success");
+            await loadFeed(currentFeedMode);
+          }
+        } catch {
+          msgEl.textContent = "Não foi possível conectar ao servidor.";
+          msgEl.className = "error";
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Publicar";
+        }
+      }
+
+      // ── Switch feed tab ─────────────────────────────────────────────────────
+      function switchFeedTab(mode) {
+        currentFeedMode = mode;
+        document.getElementById("tab-general").classList.toggle("active", mode === "general");
+        document.getElementById("tab-following").classList.toggle("active", mode === "following");
+        loadFeed(mode);
+      }
+
+      // ── Load feed ───────────────────────────────────────────────────────────
+      async function loadFeed(mode = 'general') {
+        currentFeedMode = mode;
+        const feed = document.getElementById("feed");
+        feed.innerHTML = '<div class="spinner"></div>';
+
+        try {
+          const url = mode === 'following'
+            ? `/api/posts?feed=following&author=${encodeURIComponent(currentUser.name)}`
+            : '/api/posts?feed=general';
+          const res = await fetch(url);
+          const data = await res.json();
+
+          if (!res.ok) throw new Error(data.error || "Erro");
+
+          if (!data.posts || data.posts.length === 0) {
+            const emptyMsg = mode === 'following'
+              ? '<p>Você ainda não segue ninguém, ou quem você segue não publicou nada.</p><small>Vá ao Feed Geral e siga alguns usuários!</small>'
+              : '<p>Nenhuma postagem ainda</p><small>Seja o primeiro a publicar!</small>';
+            feed.innerHTML = `
+            <div class="feed-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M17 8h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2v4l-4-4H9a2 2 0 0 1-2-2v-1"/>
+                <path d="M15 3H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2l4 4V11h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/>
+              </svg>
+              ${emptyMsg}
+            </div>`;
+            return;
+          }
+
+          feed.innerHTML = data.posts.map((post) => renderPost(post)).join("");
+
+          // Restore liked + follow states in parallel
+          const likedChecks = data.posts.map((post) =>
+            fetch(`/api/posts/${post.id}/liked?author=${encodeURIComponent(currentUser.name)}`)
+              .then((r) => r.json())
+              .then((d) => ({ id: post.id, liked: d.liked }))
+              .catch(() => ({ id: post.id, liked: false }))
+          );
+          const likedResults = await Promise.all(likedChecks);
+          likedResults.forEach(({ id, liked }) => {
+            if (liked) {
+              likedPosts.add(id);
+              const btn = document.getElementById(`like-btn-${id}`);
+              if (btn) {
+                btn.classList.add("liked");
+                btn.querySelector("svg").setAttribute("fill", "currentColor");
+              }
+            }
+          });
+
+          // Check follow status for non-own posts
+          await checkFollowStatuses(data.posts);
+        } catch {
+          feed.innerHTML = `<div class="feed-empty">
+          <p style="color:var(--danger)">Erro ao carregar o feed.</p>
+          <small>Verifique a conexão com o servidor.</small>
+        </div>`;
+        }
+      }
+
+      // ── Filter by user ──────────────────────────────────────────────────────
+      async function filterByUser(name) {
+        const feed = document.getElementById("feed");
+        feed.innerHTML = '<div class="spinner"></div>';
+
+        // Deactivate feed tabs while viewing a user profile
+        document.getElementById("tab-general").classList.remove("active");
+        document.getElementById("tab-following").classList.remove("active");
+
+        try {
+          const res = await fetch(`/api/posts/user/${encodeURIComponent(name)}`);
+          const data = await res.json();
+
+          if (!res.ok) throw new Error(data.error || "Erro");
+
+          const backBtn = `<button class="btn-back" onclick="switchFeedTab(currentFeedMode)">← Voltar ao feed</button>`;
+
+          if (!data.posts || data.posts.length === 0) {
+            feed.innerHTML = backBtn + `
+            <div class="feed-empty">
+              <p>Nenhuma postagem de <strong>${escapeHtml(name)}</strong>.</p>
+            </div>`;
+            return;
+          }
+
+          feed.innerHTML = backBtn + data.posts.map((post) => renderPost(post)).join("");
+
+          const likedChecks = data.posts.map((post) =>
+            fetch(`/api/posts/${post.id}/liked?author=${encodeURIComponent(currentUser.name)}`)
+              .then((r) => r.json())
+              .then((d) => ({ id: post.id, liked: d.liked }))
+              .catch(() => ({ id: post.id, liked: false }))
+          );
+          const results = await Promise.all(likedChecks);
+          results.forEach(({ id, liked }) => {
+            if (liked) {
+              likedPosts.add(id);
+              const btn = document.getElementById(`like-btn-${id}`);
+              if (btn) {
+                btn.classList.add("liked");
+                btn.querySelector("svg").setAttribute("fill", "currentColor");
+              }
+            }
+          });
+
+          await checkFollowStatuses(data.posts);
+        } catch {
+          feed.innerHTML = `<button class="btn-back" onclick="switchFeedTab(currentFeedMode)">← Voltar ao feed</button>
+          <div class="feed-empty"><p style="color:var(--danger)">Erro ao carregar posts do usuário.</p></div>`;
+        }
+      }
+
+      // ── Follow helpers ──────────────────────────────────────────────────────
+      async function checkFollowStatuses(posts) {
+        const otherPosts = posts.filter((p) => p.author !== currentUser?.name);
+        if (!otherPosts.length) return;
+        const checks = otherPosts.map((p) =>
+          fetch(`/api/follow/status?follower=${encodeURIComponent(currentUser.name)}&following=${encodeURIComponent(p.author)}`)
+            .then((r) => r.json())
+            .then((d) => ({ postId: p.id, author: p.author, isFollowing: d.following }))
+            .catch(() => ({ postId: p.id, author: p.author, isFollowing: false }))
+        );
+        const results = await Promise.all(checks);
+        results.forEach(({ postId, isFollowing }) => {
+          const btn = document.getElementById(`follow-btn-${postId}`);
+          if (!btn) return;
+          btn.style.display = "";
+          btn.textContent = isFollowing ? "Seguindo" : "Seguir";
+          btn.classList.toggle("following", isFollowing);
+        });
+      }
+
+      async function toggleFollow(postId, author) {
+        const btn = document.getElementById(`follow-btn-${postId}`);
+        if (!btn) return;
+        const isCurrentlyFollowing = btn.classList.contains("following");
+        const endpoint = isCurrentlyFollowing ? "/api/unfollow" : "/api/follow";
+        btn.disabled = true;
+        try {
+          const res = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ follower: currentUser.name, following: author }),
+          });
+          const data = await res.json();
+          if (!res.ok) { showToast(data.error || "Erro.", "error"); return; }
+          const nowFollowing = !isCurrentlyFollowing;
+          btn.textContent = nowFollowing ? "Seguindo" : "Seguir";
+          btn.classList.toggle("following", nowFollowing);
+          showToast(data.message, nowFollowing ? "success" : "");
+          // Reload feed if on "Seguindo" tab so removed posts disappear
+          if (currentFeedMode === 'following' && !nowFollowing) {
+            await loadFeed('following');
+          }
+        } catch {
+          showToast("Erro ao alterar follow.", "error");
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      }
+
+      // ── Render post card ────────────────────────────────────────────────────
+      function renderPost(post) {
+        const initial = getInitial(post.author);
+        const isOwn = post.author === currentUser?.name;
+        const liked = likedPosts.has(post.id);
+        const time = formatTime(post.createdAt);
+
+        return `
+        <div class="post-card" id="card-${post.id}">
+          <div class="post-top">
+            <div class="avatar sm ${isOwn ? "" : "muted"}">${initial}</div>
+            <div class="post-meta">
+              <div class="post-author">
+                <span class="author-link" onclick="filterByUser('${escapeHtml(post.author)}')">${escapeHtml(post.author)}</span>
+                ${!isOwn ? `<button class="btn-follow" id="follow-btn-${post.id}" onclick="toggleFollow('${post.id}', '${escapeHtml(post.author)}')" style="display:none">Seguir</button>` : ''}
+              </div>
+              <div class="post-time">${time}</div>
+            </div>
+          </div>
+          <p class="post-content">${escapeHtml(post.content)}</p>
+          <div class="post-footer">
+            <button
+              class="btn-like ${liked ? "liked" : ""}"
+              id="like-btn-${post.id}"
+              onclick="handleLike('${post.id}')"
+              title="Curtir"
+            >
+              <svg viewBox="0 0 24 24" fill="${liked ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+              <span id="like-count-${post.id}">${post.likes}</span>
+            </button>
+            <button
+              class="btn-comment"
+              id="comment-btn-${post.id}"
+              onclick="toggleComments('${post.id}')"
+              title="Comentar"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              Comentar
+            </button>
+          </div>
+          <div class="comment-section" id="comments-${post.id}">
+            <div class="comment-list" id="comment-list-${post.id}"></div>
+            <div class="comment-form">
+              <div class="avatar sm">${initial}</div>
+              <textarea
+                class="comment-input"
+                id="comment-input-${post.id}"
+                placeholder="Escreva um comentário..."
+                rows="1"
+              ></textarea>
+              <button class="btn-submit-comment" onclick="submitComment('${post.id}')">Comentar</button>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      // ── Comments ────────────────────────────────────────────────────────────
+      function toggleComments(postId) {
+        const section = document.getElementById(`comments-${postId}`);
+        const btn = document.getElementById(`comment-btn-${postId}`);
+        const isOpen = section.classList.contains("open");
+        section.classList.toggle("open");
+        btn.classList.toggle("active", !isOpen);
+        if (!isOpen) loadComments(postId);
+      }
+
+      async function loadComments(postId) {
+        const list = document.getElementById(`comment-list-${postId}`);
+        list.innerHTML = '<div class="spinner" style="width:16px;height:16px;margin:8px auto"></div>';
+        try {
+          const res = await fetch(`/api/posts/${postId}/comments`);
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+          if (!data.comments || data.comments.length === 0) {
+            list.innerHTML = '<p class="comments-empty">Nenhum comentário ainda. Seja o primeiro!</p>';
+            return;
+          }
+          list.innerHTML = data.comments.map((c) => `
+            <div class="comment-item">
+              <div class="avatar sm muted">${getInitial(c.author)}</div>
+              <div class="comment-body">
+                <div class="comment-author">${escapeHtml(c.author)}</div>
+                <div class="comment-content">${escapeHtml(c.content)}</div>
+                <div class="comment-time">${formatTime(c.createdAt)}</div>
+              </div>
+            </div>`).join("");
+        } catch {
+          list.innerHTML = '<p class="comments-empty" style="color:var(--danger)">Erro ao carregar comentários.</p>';
+        }
+      }
+
+      async function submitComment(postId) {
+        const input = document.getElementById(`comment-input-${postId}`);
+        const content = input.value.trim();
+        if (!content) return;
+        const btn = input.nextElementSibling;
+        btn.disabled = true;
+        try {
+          const res = await fetch(`/api/posts/${postId}/comments`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ author: currentUser.name, content }),
+          });
+          const data = await res.json();
+          if (!res.ok) { showToast(data.error || "Erro ao comentar.", "error"); return; }
+          input.value = "";
+          await loadComments(postId);
+        } catch {
+          showToast("Erro ao enviar comentário.", "error");
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      // ── Like a post ─────────────────────────────────────────────────────────
+      async function handleLike(postId) {
+        if (likedPosts.has(postId)) {
+          showToast("Você já curtiu este post.", "");
+          return;
+        }
+
+        try {
+          const res = await fetch(`/api/posts/${postId}/like`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ author: currentUser.name }),
+          });
+          const data = await res.json();
+
+          if (res.ok) {
+            likedPosts.add(postId);
+            const countEl = document.getElementById(`like-count-${postId}`);
+            const btn = document.getElementById(`like-btn-${postId}`);
+            if (countEl) countEl.textContent = data.likes;
+            if (btn) {
+              btn.classList.add("liked");
+              btn.querySelector("svg").setAttribute("fill", "currentColor");
+            }
+          } else if (data.alreadyLiked) {
+            likedPosts.add(postId);
+            const btn = document.getElementById(`like-btn-${postId}`);
+            if (btn) {
+              btn.classList.add("liked");
+              btn.querySelector("svg").setAttribute("fill", "currentColor");
+            }
+            showToast("Você já curtiu este post.", "");
+          }
+        } catch {
+          showToast("Erro ao curtir.", "error");
+        }
+      }
+
+      // ── Helpers ─────────────────────────────────────────────────────────────
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function formatTime(isoString) {
+        if (!isoString) return "";
+        const date = new Date(isoString);
+        const now = new Date();
+        const diff = (now - date) / 1000;
+
+        if (diff < 60) return "agora mesmo";
+        if (diff < 3600) return `${Math.floor(diff / 60)} min atrás`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h atrás`;
+
+        return date.toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+      }
+    </script>
+  </body>
+</html>
